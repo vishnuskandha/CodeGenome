@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv
+vcs
+.pytest_cache/
+
+# Environment Variables (CRITICAL)
+.env
+codegenome_v2/.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Project specific
+Code Genome V2 Code Explanation.pdf
+Code Genome V2 Complete Documentation.pdf
