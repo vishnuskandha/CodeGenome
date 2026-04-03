@@ -15,7 +15,16 @@ python3 -m pip install -r requirements.txt
 # 3. Setup .env
 if [ ! -f .env ]; then
     echo "📝 Creating .env from template..."
-    cp .env.example .env
+    if [ -f .env.example ]; then
+        cp .env.example .env
+    else
+        cat > .env <<EOF
+OPENROUTER_API_KEY=
+SAMBANOVA_API_KEY=
+OPENAI_API_KEY=
+GITHUB_TOKEN=
+EOF
+    fi
     echo "✅ .env created. Please add your API keys!"
 else
     echo "✅ .env file exists."

@@ -14,7 +14,16 @@ python -m pip install -r requirements.txt
 # 3. Setup .env
 if (!(Test-Path .env)) {
     Write-Host "📝 Creating .env from template..." -ForegroundColor Yellow
-    Copy-Item .env.example .env
+    if (Test-Path .env.example) {
+        Copy-Item .env.example .env
+    } else {
+        @(
+            "OPENROUTER_API_KEY="
+            "SAMBANOVA_API_KEY="
+            "OPENAI_API_KEY="
+            "GITHUB_TOKEN="
+        ) | Set-Content .env
+    }
     Write-Host "✅ .env created. Please add your API keys to it!" -ForegroundColor Green
 } else {
     Write-Host "✅ .env file exists." -ForegroundColor Green

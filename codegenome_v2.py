@@ -126,26 +126,41 @@ class GitHubFetcher:
         
         # Parse repo owner and name
         parts = repo_url.rstrip("/").split("/")
+        if len(parts) < 2:
+            raise ValueError(f"Invalid GitHub repository URL: {repo_url}")
         self.owner = parts[-2]
         self.repo = parts[-1]
+        if self.repo.endswith(".git"):
+            self.repo = self.repo[:-4]
         self.api_base = f"https://api.github.com/repos/{self.owner}/{self.repo}"
     
     def get_repo_tree(self, max_files: int = 500) -> List[Dict[str, Any]]:
         """Get repository file tree via GitHub API"""
         console.print(f"[cyan]Fetching repository tree for {self.owner}/{self.repo}...[/cyan]")
-        
-        url = f"{self.api_base}/git/trees/main?recursive=1"
-        response = requests.get(url, headers=self.headers)
-        
-        if response.status_code == 404:
-            # Try 'master' branch
-            url = f"{self.api_base}/git/trees/master?recursive=1"
+
+        # Detect default branch first; fall back to common branch names
+        branches_to_try = []
+        repo_response = requests.get(self.api_base, headers=self.headers)
+        if repo_response.status_code == 401:
+            raise Exception("Failed to fetch repository info: 401 - Bad Credentials. Please check GITHUB_TOKEN in .env for typos (should start with 'ghp_').")
+        if repo_response.status_code == 200:
+            default_branch = repo_response.json().get("default_branch")
+            if default_branch:
+                branches_to_try.append(default_branch)
+        branches_to_try.extend(["main", "master"])
+        branches_to_try = list(dict.fromkeys(branches_to_try))
+
+        response = None
+        for branch in branches_to_try:
+            url = f"{self.api_base}/git/trees/{branch}?recursive=1"
             response = requests.get(url, headers=self.headers)
-        
-        if response.status_code == 401:
-            raise Exception(f"Failed to fetch repo tree: 401 - Bad Credentials. Please check GITHUB_TOKEN in .env for typos (should start with 'ghp_').")
-        if response.status_code != 200:
-            raise Exception(f"Failed to fetch repo tree: {response.status_code} - {response.text}")
+            if response.status_code == 200:
+                break
+            if response.status_code == 401:
+                raise Exception("Failed to fetch repo tree: 401 - Bad Credentials. Please check GITHUB_TOKEN in .env for typos (should start with 'ghp_').")
+
+        if not response or response.status_code != 200:
+            raise Exception(f"Failed to fetch repo tree: {response.status_code if response else 'unknown'} - {response.text if response else 'no response'}")
         
         tree = response.json().get("tree", [])
         
@@ -545,14 +560,35 @@ class GitAnalyzer:
             return False
             
         try:
-            import tempfile
-            self.repo_path = tempfile.mkdtemp()
+            import shutil
+            from pathlib import Path
+            temp_base = Path(".codegenome_tmp_git")
+            temp_base.mkdir(exist_ok=True)
+            self.repo_path = str(temp_base / "repo_clone")
+            if Path(self.repo_path).exists():
+                shutil.rmtree(self.repo_path, ignore_errors=True)
             console.print(f"[cyan]Cloning repository (shallow, depth={depth})...[/cyan]")
             Repo.clone_from(self.repo_url, self.repo_path, depth=depth)
             return True
         except Exception as e:
             console.print(f"[yellow]Git clone failed: {e}[/yellow]")
             return False
+
+    def cleanup(self):
+        """Clean up temporary clone directory"""
+        if not self.repo_path:
+            return
+        try:
+            import shutil
+            from pathlib import Path
+            repo_path = Path(self.repo_path)
+            root_dir = repo_path.parent
+            if repo_path.exists():
+                shutil.rmtree(repo_path, ignore_errors=True)
+            if root_dir.exists() and not any(root_dir.iterdir()):
+                root_dir.rmdir()
+        except Exception:
+            pass
     
     def analyze_commits(self) -> Dict[str, Any]:
         """Analyze commit frequency and contributors"""
@@ -682,13 +718,13 @@ class DependencyScanner:
                     for pkg, version in deps.items():
                         # Check for wildcard versions (security risk)
                         if '*' in version or 'latest' in version:
-                            vulnerabilities.append({
-                                "file": file_info.path,
-                                "package": pkg,
-                                "issue": "Unpinned dependency version",
-                                "severity": "low"
-                            })
-                except:
+                                vulnerabilities.append({
+                                    "file": file_info.path,
+                                    "package": pkg,
+                                    "issue": "Unpinned dependency version",
+                                    "severity": "low"
+                                })
+                except json.JSONDecodeError:
                     pass
         
         return vulnerabilities
@@ -1187,8 +1223,11 @@ def analyze_repository(repo_url: str, max_files: int = 200) -> Tuple[AnalysisRes
     # Step 7 (v2): Git Analysis
     git_analysis = {}
     git_analyzer = GitAnalyzer(repo_url)
-    if git_analyzer.clone_shallow(depth=50):
-        git_analysis = git_analyzer.analyze_commits()
+    try:
+        if git_analyzer.clone_shallow(depth=50):
+            git_analysis = git_analyzer.analyze_commits()
+    finally:
+        git_analyzer.cleanup()
     
     # Step 8 (v2): Quality Analysis
     console.print("[cyan]Analyzing code quality...[/cyan]")
