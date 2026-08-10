@@ -8,7 +8,16 @@ vcs
 
 # Environment Variables (CRITICAL)
 .env
+.env.*
 codegenome_v2/.env
+
+# Secrets and keys — never commit these
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
 
 # OS files
 .DS_Store
