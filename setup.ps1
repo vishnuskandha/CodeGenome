@@ -10,6 +10,10 @@ if (!(Get-Command python -ErrorAction SilentlyContinue)) {
 # 2. Install Dependencies
 Write-Host "📦 Installing dependencies..." -ForegroundColor Yellow
 python -m pip install -r requirements.txt
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "❌ Dependency installation failed. Fix the pip error above and run setup again." -ForegroundColor Red
+    exit $LASTEXITCODE
+}
 
 # 3. Setup .env
 if (!(Test-Path .env)) {
