@@ -1,4 +1,8 @@
+<div align="center">
+
 # CodeGenome
+
+</div>
 
 
 <!-- README polish: repository metadata badges -->
