@@ -1,5 +1,15 @@
 # CodeGenome
 
+
+<!-- README polish: repository metadata badges -->
+<p>
+  <a href="https://github.com/vishnuskandha/CodeGenome"><img alt="GitHub stars" src="https://img.shields.io/github/stars/vishnuskandha/CodeGenome?style=for-the-badge&logo=github&label=Stars"></a>
+  <a href="https://github.com/vishnuskandha/CodeGenome/fork"><img alt="GitHub forks" src="https://img.shields.io/github/forks/vishnuskandha/CodeGenome?style=for-the-badge&logo=github&label=Forks"></a>
+  <a href="https://github.com/vishnuskandha/CodeGenome/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/vishnuskandha/CodeGenome?style=for-the-badge&logo=github&label=Issues"></a>
+  <a href="https://github.com/vishnuskandha/CodeGenome/commits"><img alt="Last commit" src="https://img.shields.io/github/last-commit/vishnuskandha/CodeGenome?style=for-the-badge&logo=git&label=Updated"></a>
+</p>
+<!-- End README polish -->
+
 [![CI](https://github.com/vishnuskandha/CodeGenome/actions/workflows/ci.yml/badge.svg)](https://github.com/vishnuskandha/CodeGenome/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Made by Vishnu Skandha](https://img.shields.io/badge/Author-Vishnu%20Skandha-blue.svg)](https://github.com/vishnuskandha)
